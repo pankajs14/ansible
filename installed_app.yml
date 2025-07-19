@@ -1,0 +1,11 @@
+- name: List installed applications
+  hosts: windows
+  gather_facts: no
+  tasks:
+    - name: Get installed software
+      win_command: powershell "Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion"
+      register: installed_apps
+
+    - name: Show apps
+      debug:
+        var: installed_apps.stdout_lines
