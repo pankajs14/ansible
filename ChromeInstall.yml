@@ -31,9 +31,9 @@
       when: not chrome_installed
       register: chrome_install
 
-- name: Wait 10 seconds for installation to complete
-  win_shell: Start-Sleep -Seconds 10
-
+    - name: Wait 10 seconds for installation to complete
+      win_shell: Start-Sleep -Seconds 10
+      when: not chrome_installed
 
     - name: Get Chrome version after installation
       win_shell: |
