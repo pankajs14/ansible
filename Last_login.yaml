@@ -10,7 +10,7 @@
             ID=4624
         } -MaxEvents 50 |
         Where-Object {
-            $_.Properties[8].Value -eq '2' -and $_.Properties[5].Value -notlike '*$'
+            $_.Properties[8].Value -eq '10' -and $_.Properties[5].Value -notlike '*$'
         } |
         Select-Object -First 5 -Property TimeCreated, @{Name="User";Expression={$_.Properties[5].Value}}
 
