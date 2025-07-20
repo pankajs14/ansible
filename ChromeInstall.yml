@@ -1,0 +1,28 @@
+---
+- name: Install Chrome if not already installed
+  hosts: "{{ target_server }}"
+  gather_facts: no
+
+  tasks:
+
+    - name: Check if Chrome is installed
+      win_shell: |
+        Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" |
+        Where-Object { $_.DisplayName -like "*Chrome*" }
+      register: chrome_check
+      ignore_errors: yes
+
+    - name: Debug existing Chrome install status
+      debug:
+        msg: "Chrome is already installed."
+      when: chrome_check.stdout != ""
+
+    - name: Install Chrome from E:\chrome if not installed
+      win_command: "E:\\chrome\\ChromeSetup.exe /silent /install"
+      when: chrome_check.stdout == ""
+      register: chrome_install
+
+    - name: Show install result
+      debug:
+        var: chrome_install.stdout
+      when: chrome_check.stdout == ""
