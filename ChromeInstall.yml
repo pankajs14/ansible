@@ -1,20 +1,22 @@
 ---
-- name: Install Chrome if not already installed
+- name: Install Chrome if not already installed and show version
   hosts: "{{ target_server }}"
   gather_facts: no
 
   tasks:
-
     - name: Check if Chrome is installed
       win_shell: |
-        Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" |
-        Where-Object { $_.DisplayName -like "*Chrome*" }
+        $chrome = Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" |
+                  Where-Object { $_.DisplayName -like "*Chrome*" }
+        if ($chrome) {
+          "Installed - Version: $($chrome.DisplayVersion)"
+        }
       register: chrome_check
       ignore_errors: yes
 
-    - name: Debug existing Chrome install status
+    - name: Show installed Chrome version
       debug:
-        msg: "Chrome is already installed."
+        msg: "{{ chrome_check.stdout }}"
       when: chrome_check.stdout != ""
 
     - name: Install Chrome from E:\chrome if not installed
@@ -22,7 +24,22 @@
       when: chrome_check.stdout == ""
       register: chrome_install
 
-    - name: Show install result
-      debug:
-        var: chrome_install.stdout
+    - name: Wait 10 seconds for installation to complete
+      wait_for:
+        timeout: 10
       when: chrome_check.stdout == ""
+
+    - name: Check version after install
+      win_shell: |
+        $chrome = Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" |
+                  Where-Object { $_.DisplayName -like "*Chrome*" }
+        if ($chrome) {
+          "Installed - Version: $($chrome.DisplayVersion)"
+        } else {
+          "Chrome not found"
+        }
+      register: post_install_check
+
+    - name: Show post-install Chrome version
+      debug:
+        msg: "{{ post_install_check.stdout }}"
