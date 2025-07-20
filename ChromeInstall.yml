@@ -1,45 +1,48 @@
 ---
-- name: Install Chrome if not already installed and show version
+- name: Check and install Chrome (64-bit only) with version from Add/Remove Programs
   hosts: "{{ target_server }}"
   gather_facts: no
 
   tasks:
-    - name: Check if Chrome is installed
+
+    - name: Check if Chrome is listed in Add/Remove Programs (64-bit only)
       win_shell: |
-        $chrome = Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" |
-                  Where-Object { $_.DisplayName -like "*Chrome*" }
-        if ($chrome) {
-          "Installed - Version: $($chrome.DisplayVersion)"
+        $apps = Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" |
+          Where-Object { $_.DisplayName -like "*Chrome*" }
+        if ($apps) {
+          $apps | ForEach-Object { "$($_.DisplayName) - Version: $($_.DisplayVersion)" }
         }
       register: chrome_check
       ignore_errors: yes
 
-    - name: Show installed Chrome version
+    - name: Determine if Chrome is already installed
+      set_fact:
+        chrome_installed: "{{ chrome_check.stdout | length > 0 }}"
+
+    - name: Show Chrome version if already installed
       debug:
-        msg: "{{ chrome_check.stdout }}"
-      when: chrome_check.stdout != ""
+        msg: |
+          Chrome is already installed:
+          {{ chrome_check.stdout_lines }}
+      when: chrome_installed
 
     - name: Install Chrome from E:\chrome if not installed
       win_command: "E:\\chrome\\ChromeSetup.exe /silent /install"
-      when: chrome_check.stdout == ""
+      when: not chrome_installed
       register: chrome_install
 
     - name: Wait 10 seconds for installation to complete
       wait_for:
         timeout: 10
-      when: chrome_check.stdout == ""
+      when: not chrome_installed
 
-    - name: Check version after install
+    - name: Get Chrome version after installation
       win_shell: |
-        $chrome = Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" |
-                  Where-Object { $_.DisplayName -like "*Chrome*" }
-        if ($chrome) {
-          "Installed - Version: $($chrome.DisplayVersion)"
-        } else {
-          "Chrome not found"
-        }
-      register: post_install_check
+        $apps = Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" |
+          Where-Object { $_.DisplayName -like "*Chrome*" }
+        $apps | ForEach-Object { "$($_.DisplayName) - Version: $($_.DisplayVersion)" }
+      register: post_install_version
 
-    - name: Show post-install Chrome version
+    - name: Show Chrome version after install
       debug:
-        msg: "{{ post_install_check.stdout }}"
+        msg: "{{ post_install_version.stdout_lines }}"
