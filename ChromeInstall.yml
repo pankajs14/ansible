@@ -1,47 +1,39 @@
 ---
-- name: Check and install Chrome (64-bit only) with version from Add/Remove Programs
+- name: Install Chrome if not already installed and show version
   hosts: "{{ target_server }}"
   gather_facts: no
 
   tasks:
 
-    - name: Check if Chrome is listed in Add/Remove Programs (64-bit only)
-      win_shell: |
-        $apps = Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" |
-          Where-Object { $_.DisplayName -like "*Chrome*" }
-        if ($apps) {
-          $apps | ForEach-Object { "$($_.DisplayName) - Version: $($_.DisplayVersion)" }
-        }
-      register: chrome_check
-      ignore_errors: yes
+    - name: Check if Chrome is already installed by checking for EXE
+      win_stat:
+        path: 'C:\Program Files\Google\Chrome\Application\chrome.exe'
+      register: chrome_path
 
-    - name: Determine if Chrome is already installed
-      set_fact:
-        chrome_installed: "{{ chrome_check.stdout | length > 0 }}"
-
-    - name: Show Chrome version if already installed
+    - name: Show message if Chrome is already installed
       debug:
-        msg: |
-          Chrome is already installed:
-          {{ chrome_check.stdout_lines }}
-      when: chrome_installed
+        msg: "Chrome is already installed."
+      when: chrome_path.stat.exists
 
     - name: Install Chrome from E:\chrome if not installed
       win_command: "E:\\chrome\\ChromeSetup.exe /silent /install"
-      when: not chrome_installed
+      when: not chrome_path.stat.exists
       register: chrome_install
 
     - name: Wait 10 seconds for installation to complete
       win_shell: Start-Sleep -Seconds 10
-      when: not chrome_installed
+      when: not chrome_path.stat.exists
 
-    - name: Get Chrome version after installation
+    - name: Get Chrome version from chrome.exe
       win_shell: |
-        $apps = Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" |
-          Where-Object { $_.DisplayName -like "*Chrome*" }
-        $apps | ForEach-Object { "$($_.DisplayName) - Version: $($_.DisplayVersion)" }
+        $path = 'C:\Program Files\Google\Chrome\Application\chrome.exe'
+        if (Test-Path $path) {
+          (Get-Item $path).VersionInfo.ProductVersion
+        } else {
+          "Chrome not found"
+        }
       register: post_install_version
 
     - name: Show Chrome version after install
       debug:
-        msg: "{{ post_install_version.stdout_lines }}"
+        msg: "Chrome version: {{ post_install_version.stdout }}"
