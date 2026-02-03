@@ -1,0 +1,12 @@
+---
+- name: List installed applications on a Windows host
+  hosts: "{{ target_server }}"
+  gather_facts: no
+  tasks:
+    - name: Get installed software
+      win_command: powershell "Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion"
+      register: installed_apps
+
+    - name: Show installed applications
+      debug:
+        var: installed_apps.stdout_lines

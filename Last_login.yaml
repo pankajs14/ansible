@@ -1,0 +1,24 @@
+---
+- name: Get last 5 user logins with timestamps
+  hosts: "{{ target_server }}"
+  gather_facts: no
+  tasks:
+    - name: Get last 5 interactive logins from event logs
+      win_shell: |
+        $events = Get-WinEvent -FilterHashtable @{
+            LogName='Security';
+            ID=4624
+        } -MaxEvents 50 |
+        Where-Object {
+            $_.Properties[8].Value -eq '10' -and $_.Properties[5].Value -notlike '*$'
+        } |
+        Select-Object -First 5 -Property TimeCreated, @{Name="User";Expression={$_.Properties[5].Value}}
+
+        $events | ForEach-Object {
+            "$($_.TimeCreated) - $($_.User)"
+        }
+      register: login_info
+
+    - name: Display last 5 logins
+      debug:
+        var: login_info.stdout_lines
