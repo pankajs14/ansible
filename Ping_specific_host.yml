@@ -1,7 +1,7 @@
 ---
 - name: Ping a specific host
   hosts:
-    - win2022New
+    - win2022N
     - win2019N
 
     
