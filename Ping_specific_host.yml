@@ -1,6 +1,6 @@
 ---
 - name: Ping a specific host
-  hosts: Non-Prod
+  hosts: NonProd
    
   tasks:
     - name: Ping the host
