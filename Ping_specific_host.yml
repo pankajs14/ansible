@@ -1,8 +1,8 @@
 ---
 - name: Ping a specific host
-  hosts: NonProd
+  hosts: Prod
   gather_facts: no
-  
+
    
   tasks:
     - name: Ping the host
