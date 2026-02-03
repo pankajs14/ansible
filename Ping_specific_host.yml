@@ -1,6 +1,6 @@
 ---
 - name: Ping a specific host
-  hosts: Prod
+  hosts: all
   gather_facts: no
 
    
