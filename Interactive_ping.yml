@@ -1,0 +1,13 @@
+---
+- name: Ping a specific host
+  hosts: "{{ target_host }}"
+  gather_facts: no
+
+   
+  tasks:
+    - name: Ping the host
+      ansible.windows.win_ping:
+
+    - name: Show host info
+      debug:
+       msg: "Hello from {{ inventory_hostname }}"
