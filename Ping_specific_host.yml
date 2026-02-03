@@ -11,4 +11,4 @@
 
     - name: Show host info
       debug:
-      msg: "Hello from {{ inventory_hostname }}"
+       msg: "Hello from {{ inventory_hostname }}"
