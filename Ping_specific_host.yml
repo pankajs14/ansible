@@ -1,10 +1,7 @@
 ---
 - name: Ping a specific host
-  hosts:
-    - win2022N
-    - win2019N
-
-    
+  hosts: Non-Prod
+   
   tasks:
     - name: Ping the host
       ansible.windows.win_ping:
